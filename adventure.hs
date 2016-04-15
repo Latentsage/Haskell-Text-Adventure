@@ -1,10 +1,6 @@
 import System.Environment
-type Name = String
-type Description = String
-data Object = Object Name Description
-data Portal = Portal Room Description
-data Room = Room Name Description [Object] [Portal]
-data Game = Game [Room] [Object]
+type Inventory = [Object]
+data Game = Game Room Inventory
 
 handleInput :: Game -> String -> String
 handleInput (Game rooms inventory) input
@@ -18,11 +14,11 @@ look target options = case getObjectByName options target of
     Nothing -> "I can't find that item."
 
 loadItem :: String -> Object
-loadItem x = [Object (head (tail (words x))) (head (tail (tail (words x))))]
+loadItem x = Object (head (tail (words x))) (head (tail (tail (words x))))
 
 filterItems :: [String] -> [Object]
 filterItems (x:xs) = case (head (words x)) of
-    "item" -> [x] ++ filterItems xs
+    "item" -> [loadItem (x)] ++ filterItems xs
     _ -> filterItems xs
 filterItems [] = []
 
@@ -35,7 +31,7 @@ getObjectByName [] _ = Nothing
 main = do
     args <- getArgs
     fileText <- readFile (head args)
-    let items = loadItems $ filterItems $ lines fileText
-    io (map (handleInput (Game [] items)))
+    let items = filterItems $ lines fileText
+    io (map (handleInput (Game (Room "Starter Room" "An empty room" [] []) items)))
  
 io f = interact (unlines . f . lines)
