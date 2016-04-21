@@ -6,11 +6,15 @@ import Rooms
 data Game = Game Room Inventory
 data Action = Action Output (Game -> Game)
 
+textAction out = Action out id
+
 noop = \game -> game
 
 handleInput :: Game -> String -> (Game, String)
-handleInput (Game room inventory) input
-    | getCommand input == "look" = applyActions game (look (getRest input) inventory)
+handleInput (Game (Room name desc stuff exits) inventory) input
+    | getCommand input == "look" = case getRest input of
+        [] -> applyActions game ((textAction name : [textAction desc]) ++ (look (getRest input) (inventory ++ stuff)))
+        _ -> applyActions game (look (getRest input) (inventory ++ stuff))
     | getCommand input == "go" = applyActions game (move (getRest input) room)
     | otherwise = (game, "Not a recognized command.")
     where
@@ -19,6 +23,7 @@ handleInput (Game room inventory) input
             (x:xs) -> unwords xs
             [] -> ""
         game = (Game room inventory)
+        room = (Room name desc stuff exits)
 
 applyActions :: Game -> [Action] -> (Game, String)
 applyActions game actions = ((foldr (.) id (map applyAction actions) game), unlines (map (\(Action out _) -> out) actions))
@@ -32,9 +37,10 @@ move dest (Room _ _ _ portals) = case searchPortals dest portals of
     Nothing -> [(Action "There is no such room" (\game -> game))]
 
 look :: String -> [Object] -> [Action]
+look [] things = [textAction "You see around you:"] ++ (map textAction (map (\(Object n d) -> n) things))
 look target options = case getObjectByName options target of
     Just (Object n d) -> [Action d (\a -> a)]
-    Nothing -> [Action "I can't find that item." (\game -> game)]
+    Nothing -> [Action "I can't find that item." id]
 
 loadItem :: String -> Object
 loadItem x = Object (head (tail (words x))) (head (tail (tail (words x))))
