@@ -8,22 +8,20 @@ data Action = Action Output (Game -> Game)
 
 noop = \game -> game
 
-handleInput :: Game -> [Action] -> [String] -> [String]
-handleInput (Game room inventory) actions (input:xs)
-    | getCommand input == "look" = uncurry handleInput (applyActions game (look (getRest input) inventory)) xs
-    | getCommand input == "go" = uncurry handleInput (applyActions game (move (getRest input) room)) xs
-    | otherwise = handleInput game (actions ++ [(Action "Not a recognized command." id)]) xs
+handleInput :: Game -> String -> (Game, String)
+handleInput (Game room inventory) input
+    | getCommand input == "look" = applyActions game (look (getRest input) inventory)
+    | getCommand input == "go" = applyActions game (move (getRest input) room)
+    | otherwise = (game, "Not a recognized command.")
     where
         getCommand x = head (words x)
         getRest x = case words x of
             (x:xs) -> unwords xs
             [] -> ""
         game = (Game room inventory)
-handleInput game (x:xs) [] = map (\(Action out _) -> out) (snd (applyActions game (x:xs)))
-handleInput _ [] [] = [""]
 
-applyActions :: Game -> [Action] -> (Game, [Action])
-applyActions game actions = ((foldr (.) id (map applyAction actions) game), (map (\(Action out _) -> (Action out noop)) actions))
+applyActions :: Game -> [Action] -> (Game, String)
+applyActions game actions = ((foldr (.) id (map applyAction actions) game), unlines (map (\(Action out _) -> out) actions))
     
 applyAction :: Action -> Game -> Game
 applyAction (Action _ f) game = f game
@@ -57,10 +55,13 @@ main = do
     args <- getArgs
     fileText <- readFile (head args)
     let items = filterItems $ lines fileText
-    stuff
-    
-stuff = do
-    io (map handleInput (Game (Room "Starter Room" "An empty room" [] []) items) [] )
+    stuff (Game startingRoom items)
+
+stuff :: Game -> IO()    
+stuff game = do
+    input <- getLine
+    putStrLn (snd (handleInput game input))
+    stuff (fst (handleInput game input))
 
 
 
