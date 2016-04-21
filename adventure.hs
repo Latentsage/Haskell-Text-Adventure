@@ -57,7 +57,10 @@ main = do
     args <- getArgs
     fileText <- readFile (head args)
     let items = filterItems $ lines fileText
-    io (handleInput (Game (Room "Starter Room" "An empty room" [] []) items) [] )
+    stuff
+    
+stuff = do
+    io (map handleInput (Game (Room "Starter Room" "An empty room" [] []) items) [] )
 
 
 
