@@ -13,7 +13,7 @@ noop = \game -> game
 handleInput :: Game -> String -> (Game, String)
 handleInput (Game (Room name desc stuff exits) inventory) input
     | getCommand input == "look" = case getRest input of
-        [] -> applyActions game ((textAction name : [textAction desc]) ++ (look (getRest input) (inventory ++ stuff)))
+        [] -> applyActions game ((textAction name : [textAction desc]) ++ (look (getRest input) (stuff)))
         _ -> applyActions game (look (getRest input) (inventory ++ stuff))
     | getCommand input == "go" = applyActions game (move (getRest input) room)
     | otherwise = (game, "Not a recognized command.")
