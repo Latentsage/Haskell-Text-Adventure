@@ -1,6 +1,7 @@
 import System.Environment
 import Base
 import Rooms
+import Network.Socket
 
 
 data Game = Game Room Inventory
@@ -57,17 +58,24 @@ getObjectByName ((Object n d):xs) name
     | otherwise = getObjectByName xs name
 getObjectByName [] _ = Nothing
 
+main :: IO()
 main = do
+    sock <- socket AF_INET Stream 0    -- create socket
+    setSocketOption sock ReuseAddr 1   -- make socket immediately reusable - eases debugging.
+    bind sock (SockAddrInet 4242 iNADDR_ANY)   -- listen on TCP port 4242.
+    listen sock 2                              -- set a max of 2 queued connections
+    
     args <- getArgs
     fileText <- readFile (head args)
     let items = filterItems $ lines fileText
-    stuff (Game startingRoom items)
+    
+    mainLoop (Game startingRoom items) sock                              -- unimplemented
 
-stuff :: Game -> IO()    
-stuff game = do
+mainLoop :: Game -> Socket -> IO()    
+mainLoop game = do
     input <- getLine
     putStrLn (snd (handleInput game input))
-    stuff (fst (handleInput game input))
+    mainLoop (fst (handleInput game input))
 
 
 
