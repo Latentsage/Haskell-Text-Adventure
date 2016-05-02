@@ -1,3 +1,5 @@
+module Adventure where
+
 import System.Environment
 import Base
 import Rooms
@@ -11,10 +13,10 @@ textAction out = Action out id
 noop = \game -> game
 
 handleInput :: Game -> String -> (Game, String)
-handleInput (Game (Room name desc stuff exits) inventory) input
+handleInput (Game (Room name desc mainLoop exits) inventory) input
     | getCommand input == "look" = case getRest input of
-        [] -> applyActions game ((textAction name : [textAction desc]) ++ (look (getRest input) (stuff)))
-        _ -> applyActions game (look (getRest input) (inventory ++ stuff))
+        [] -> applyActions game ((textAction name : [textAction desc]) ++ (look (getRest input) (mainLoop)))
+        _ -> applyActions game (look (getRest input) (inventory ++ mainLoop))
     | getCommand input == "go" = applyActions game (move (getRest input) room)
     | otherwise = (game, "Not a recognized command.")
     where
@@ -23,7 +25,7 @@ handleInput (Game (Room name desc stuff exits) inventory) input
             (x:xs) -> unwords xs
             [] -> ""
         game = (Game room inventory)
-        room = (Room name desc stuff exits)
+        room = (Room name desc mainLoop exits)
 
 applyActions :: Game -> [Action] -> (Game, String)
 applyActions game actions = ((foldr (.) id (map applyAction actions) game), unlines (map (\(Action out _) -> out) actions))
@@ -57,17 +59,11 @@ getObjectByName ((Object n d):xs) name
     | otherwise = getObjectByName xs name
 getObjectByName [] _ = Nothing
 
-main = do
-    args <- getArgs
-    fileText <- readFile (head args)
-    let items = filterItems $ lines fileText
-    stuff (Game startingRoom items)
-
-stuff :: Game -> IO()    
-stuff game = do
-    input <- getLine
-    putStrLn (snd (handleInput game input))
-    stuff (fst (handleInput game input))
+-- main = do
+--     args <- getArgs
+--     fileText <- readFile (head args)
+--     let items = filterItems $ lines fileText
+--     mainLoop (Game startingRoom items)
 
 
 
