@@ -45,7 +45,7 @@ runConn (sock, _) = do
         line <- liftM init (hGetLine hdl)
         case line of
              -- If an exception is caught, send a message and break the loop
-             "quit" -> hPutStrLn hdl "Bye!"
+             "quit" -> hPutStrLn hdl "Goodbye!"
              -- else, continue looping.
              _      -> loop
  
